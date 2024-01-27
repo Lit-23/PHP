@@ -1,8 +1,46 @@
 <?php
 
-session_start();
+// establish database config
+$host = 'localhost';
+$username = 'root';
+$password = '';
+$database = 'todolist';
 
-$students = $_SESSION['students'];
+// create database connection
+$conn = new mysqli($host, $username, $password, $database);
+
+// check connection
+if($conn -> connect_error){
+  echo"Database connection error!";
+}
+
+if($_SERVER['REQUEST_METHOD'] == 'POST'){
+  if(isset($_POST['newtodo'])){
+    // add task to db
+    $sql = "INSERT INTO todos (todo, status) VALUES ('" . $_POST['newtodo'] . "', 'pending')";
+    $conn->query($sql);
+  }
+}
+
+// function to display todo list
+function displayTodoList(){
+  global $conn;
+  $sql = "SELECT * FROM todos";
+  $result = $conn->query($sql);
+  if($result->num_rows > 0){
+    echo "<ul>";
+    while($row = $result->fetch_assoc()){
+      if($row['status'] == 'pending'){
+        echo "<li>" . $row['todo'] . "<span class='badge bg-secondary'>PENDING</span>" . "</li>";
+      }else{
+        echo "<li>" . $row['todo'] . "<span class='badge bg-success'>COMPLETED</span>" . "</li>";
+      }
+    }
+    echo "</ul>";
+  }else{
+    echo "<p>There are currently no todos</p>";
+  }
+}
 
 ?>
 
@@ -17,29 +55,18 @@ $students = $_SESSION['students'];
 </head>
 <body>
   <div class="container m-5 p-5 border shadow">
-    <h1 class="fw-bold">My first PHP code!</h1>
+    <h1 class="fw-bold">Todo List</h1>
     <hr>
-    <form method="POST" action="newstudent.php">
-      <label for="firstname">Firstname:</label>
-      <input type="text" id="firstname" name="firstname" class="form-control" required>lastname
-      <label for="lastname">Lastname:</label>
-      <input type="text" id="lastname" name="lastname" class="form-control" required>
-      <label for="batch">Batch:</label>
-      <input type="text" id="batch" name="batch" class="form-control" required>
+    <form method="POST" action="index.php">
+      <input type="text" id="newtodo" name="newtodo" class="form-control" required>
       <button class="btn btn-dark btn-sm mt-2" type="submit">+ Add</button>
     </form>
 
-    <form method="POST" action="clearstudents.php">
-      <button class="btn btn-sm btn-light mt-3">🗑 Clear</button>
-    </form>
     <hr>
-    <ul>
-      <?php 
-        foreach($students as $student){
-          echo "<li>".$student['firstname']." ".$student['lastname']." | ".$student['batch']."</li>";
-        }
-      ?>
-    </ul>
+
+    <?php
+    displayTodoList();
+    ?>
   </div>
 </body>
 </html>
